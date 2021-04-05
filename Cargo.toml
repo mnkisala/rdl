@@ -1,9 +1,9 @@
 [package]
 name = "rdl"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["nm <mnkisala@gmail.com>"]
 edition = "2018"
-license = "GPLv3"
+license = "GPL-3.0"
 repository = "https://github.com/mnkisala/rdl"
 description = "dmenu launcher for .desktop files"
 readme = "README.md"
