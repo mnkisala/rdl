@@ -4,7 +4,8 @@ located in `/usr/share/applications`. You can set your dmenu
 command, terminal for terminal applications and paths where .desktop
 files are located with command line parameters.
 
-[![crates.io][crates-badge]][crates-url]
+[![Crates.io][crates-badge]][crates-url]
+
 [crates-badge]: https://img.shields.io/crates/v/rdl.svg
 [crates-url]: https://crates.io/crates/rdl
 
