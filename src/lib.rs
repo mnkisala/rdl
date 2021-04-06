@@ -33,11 +33,16 @@ impl Exec {
     pub fn run(&self, term_cmd: &str) {
         let exec = process_exec(&self.exec);
 
-        if self.terminal {
-            spawn(&format!("{} {}", term_cmd, &exec));
-        } else {
-            spawn(&exec);
+        let mut child = {
+            if self.terminal {
+                spawn(&format!("{} {}", term_cmd, &exec))
+            } else {
+                spawn(&exec)
+            }
         }
+        .expect(&format!("failed to spawn process '{}'", exec));
+
+        child.wait().unwrap();
     }
 }
 
