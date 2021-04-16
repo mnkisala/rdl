@@ -9,14 +9,12 @@ pub struct Exec {
 
 // TODO: find out how to make it do something more intelligent with '%'s
 fn process_exec(exec: &str) -> String {
-    let res: String = exec
+    let res: Vec<&str> = exec
         .split(' ')
         .filter(|arg| (*arg).chars().next().unwrap() != '%')
-        .map(|sv| sv.chars())
-        .flatten()
         .collect();
 
-    res
+    res.join(" ")
 }
 
 impl Exec {
