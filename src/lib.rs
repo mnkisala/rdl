@@ -92,7 +92,7 @@ fn get_entries_from_path(dir: &Path) -> io::Result<Vec<DirEntry>> {
     Ok(entries)
 }
 
-pub fn get_execs(paths: Vec<&str>) -> Vec<Exec> {
+pub fn get_execs(paths: &Vec<String>) -> Vec<Exec> {
     let execs: Vec<Exec> = paths
         .iter()
         .map(|path| get_entries_from_path(Path::new(path)).unwrap())
@@ -129,4 +129,96 @@ fn spawn(cmd: &str) -> Option<Child> {
         .stdout(Stdio::piped())
         .spawn()
         .ok()
+}
+
+pub struct RdlConfig {
+    paths: Vec<String>,
+    dmenu: String,
+    terminal: String,
+    unique: bool,
+}
+
+impl RdlConfig {
+    pub fn update_with_clap_matches(&mut self, matches: clap::ArgMatches) {
+        if let Some(dmenu_cmd) = matches.value_of("dmenu") {
+            self.dmenu = String::from(dmenu_cmd);
+        }
+
+        if let Some(term) = matches.value_of("term") {
+            self.terminal = String::from(term);
+        }
+
+        if let Some(paths) = matches.value_of("paths") {
+            self.paths = paths.split(":").map(|s| String::from(s)).collect();
+        }
+
+        if matches.is_present("unique") {
+            self.unique = true;
+        }
+    }
+
+    pub fn run(&self) {
+        let execs = get_execs(&self.paths);
+
+        use itertools::Itertools;
+        let to_run = match self.unique {
+            true => run_dmenu(execs.iter().unique_by(|a| a.name.clone()), &self.dmenu),
+            false => run_dmenu(execs.iter(), &self.dmenu),
+        };
+
+        if let Some(to_run) = to_run {
+            to_run.run(&self.terminal);
+        }
+    }
+
+    pub fn update_with_config_file(&mut self, path: &std::path::Path) {
+        let content = match std::fs::read_to_string(path) {
+            Ok(content) => content,
+            Err(..) => return,
+        };
+
+        let doc = match yaml_rust::YamlLoader::load_from_str(&content) {
+            Ok(loader) => loader[0].clone(),
+            Err(..) => return,
+        };
+
+        if let Some(dmenu) = doc["dmenu"].as_str() {
+            self.dmenu = String::from(dmenu);
+        }
+
+        if let Some(term) = doc["term"].as_str() {
+            self.terminal = String::from(term);
+        }
+
+        if let Some(paths) = doc["paths"].as_vec() {
+            self.paths = paths
+                .iter()
+                .map(|y| String::from(y.as_str().unwrap_or("")))
+                .collect();
+        }
+
+        if let Some(unique) = doc["unique"].as_bool() {
+            self.unique = unique;
+        }
+    }
+}
+
+impl Default for RdlConfig {
+    fn default() -> Self {
+        Self {
+            paths: vec![
+                format!(
+                    "{}/.local/share/applications",
+                    std::env::var("HOME").unwrap()
+                ),
+                String::from("/usr/share/applications"),
+            ],
+            dmenu: String::from("dmenu"),
+            terminal: {
+                let term = std::env::var("TERM").unwrap_or(String::from("xterm"));
+                format!("{} -e", term)
+            },
+            unique: false,
+        }
+    }
 }

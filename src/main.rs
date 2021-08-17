@@ -12,7 +12,7 @@ fn main() {
                 .value_name("PATHS")
                 .help(
                     r#"':' separated absolute paths to directories 
-with desktop entries (default: '/usr/share/applications')"#,
+with desktop entries (default: '(path to home)/.local/share/applications:/usr/share/applications')"#,
                 )
                 .takes_value(true),
         )
@@ -42,36 +42,25 @@ is not set then falls back to xterm)"#,
                 .short("u")
                 .required(false)
                 .help(r#"deduplicates entries by name allowing to make overrides, the 
-first entry read stays, so if you've set paths to "$USER/.local/share/applications:/usr/share/applications"
-it's going to override ones in /usr/share/applications with the ones from $USER/.local/share/applications"#)
+first entry read stays, so if you've set paths to "(path to your home)/.local/share/applications:/usr/share/applications"
+it's going to override ones in /usr/share/applications with the ones from (path to your home)/.local/share/applications"#)
                 .takes_value(false),
         )
         .get_matches();
 
-    let dmenu_cmd = matches.value_of("dmenu").unwrap_or("dmenu");
-    let term_cmd: String = match matches.value_of("term") {
-        Some(cmd) => String::from(cmd),
-        None => {
-            let term = std::env::var("TERM").unwrap_or(String::from("xterm"));
-            format!("{} -e", term)
-        }
-    };
+    let mut config = rdl::RdlConfig::default();
 
-    let paths: Vec<&str> = matches
-        .value_of("paths")
-        .unwrap_or("/usr/share/applications")
-        .split(":")
-        .collect();
+    config.update_with_config_file(std::path::Path::new(&format!(
+        "{}/.config/rdl.yaml",
+        std::env::var("HOME").unwrap()
+    )));
 
-    let execs = rdl::get_execs(paths);
+    config.update_with_config_file(std::path::Path::new(&format!(
+        "{}/.config/rdl/config.yaml",
+        std::env::var("HOME").unwrap()
+    )));
 
-    use itertools::Itertools;
-    let to_run = match matches.is_present("unique") {
-        true => rdl::run_dmenu(execs.iter().unique_by(|a| a.name.clone()), dmenu_cmd),
-        false => rdl::run_dmenu(execs.iter(), dmenu_cmd),
-    };
+    config.update_with_clap_matches(matches);
 
-    if let Some(to_run) = to_run {
-        to_run.run(&term_cmd);
-    }
+    config.run();
 }

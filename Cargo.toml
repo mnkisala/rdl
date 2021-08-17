@@ -1,6 +1,6 @@
 [package]
 name = "rdl"
-version = "0.1.5"
+version = "0.2"
 authors = ["nm <mnkisala@gmail.com>"]
 edition = "2018"
 license = "MPL-2.0"
@@ -14,3 +14,4 @@ readme = "README.md"
 freedesktop_entry_parser = "1.1"
 clap = "2.33"
 itertools = "0.10"
+yaml-rust = "0.4"
