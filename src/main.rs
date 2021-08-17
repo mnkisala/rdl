@@ -36,6 +36,16 @@ is not set then falls back to xterm)"#,
                 )
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("unique")
+                .long("unique")
+                .short("u")
+                .required(false)
+                .help(r#"deduplicates entries by name allowing to make overrides, the 
+first entry read stays, so if you've set paths to "$USER/.local/share/applications:/usr/share/applications"
+it's going to override ones in /usr/share/applications with the ones from $USER/.local/share/applications"#)
+                .takes_value(false),
+        )
         .get_matches();
 
     let dmenu_cmd = matches.value_of("dmenu").unwrap_or("dmenu");
@@ -54,7 +64,14 @@ is not set then falls back to xterm)"#,
         .collect();
 
     let execs = rdl::get_execs(paths);
-    if let Some(to_run) = rdl::run_dmenu(&execs, dmenu_cmd) {
+
+    use itertools::Itertools;
+    let to_run = match matches.is_present("unique") {
+        true => rdl::run_dmenu(execs.iter().unique_by(|a| a.name.clone()), dmenu_cmd),
+        false => rdl::run_dmenu(execs.iter(), dmenu_cmd),
+    };
+
+    if let Some(to_run) = to_run {
         to_run.run(&term_cmd);
     }
 }

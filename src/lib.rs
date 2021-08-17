@@ -2,9 +2,9 @@ use std::process::{Child, Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct Exec {
-    name: String,
-    exec: String,
-    terminal: bool,
+    pub name: String,
+    pub exec: String,
+    pub terminal: bool,
 }
 
 // TODO: find out how to make it do something more intelligent with '%'s
@@ -46,10 +46,13 @@ impl Exec {
 
 /// runs `dmenu_cmd` and returns exec corresponding to dmenu's
 /// output
-pub fn run_dmenu(execs: &Vec<Exec>, dmenu_cmd: &str) -> Option<Exec> {
+pub fn run_dmenu<'a, I: std::iter::Iterator<Item = &'a Exec> + Clone>(
+    execs: I,
+    dmenu_cmd: &str,
+) -> Option<Exec> {
     use std::io::Write;
 
-    let names: Vec<String> = execs.iter().map(|exec| exec.name.clone()).collect();
+    let names: Vec<String> = execs.clone().map(|exec| exec.name.clone()).collect();
     let names = names.join("\n");
 
     let mut dmenu = spawn(dmenu_cmd)?;
@@ -63,7 +66,7 @@ pub fn run_dmenu(execs: &Vec<Exec>, dmenu_cmd: &str) -> Option<Exec> {
     let output = dmenu.wait_with_output().ok()?;
     let output = String::from_utf8(output.stdout).ok()?;
 
-    Some((execs.iter().find(|exec| exec.name == output.trim_end())?).clone())
+    Some((execs.clone().find(|exec| exec.name == output.trim_end())?).clone())
 }
 
 use freedesktop_entry_parser::parse_entry;
