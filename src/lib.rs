@@ -33,9 +33,11 @@ impl Exec {
 
         let mut child = {
             if self.terminal {
+                println!("running: {} {}", term_cmd, &exec);
                 spawn(&format!("{} {}", term_cmd, &exec))
             } else {
-                spawn(&exec)
+                println!("running: {}", &exec);
+                spawn(&format!("{}", &exec))
             }
         }
         .expect(&format!("failed to spawn process '{}'", exec));
@@ -71,7 +73,7 @@ pub fn run_dmenu<'a, I: std::iter::Iterator<Item = &'a Exec> + Clone>(
 
 use freedesktop_entry_parser::parse_entry;
 use std::fs::{self, DirEntry};
-use std::io;
+use std::io::{self, Stderr};
 use std::path::Path;
 
 fn get_entries_from_path(dir: &Path) -> io::Result<Vec<DirEntry>> {
@@ -122,9 +124,9 @@ pub fn get_execs(paths: &Vec<String>) -> Vec<Exec> {
 }
 
 fn spawn(cmd: &str) -> Option<Child> {
-    let mut args = cmd.split(' ');
-    Command::new(args.next()?)
-        .args(args)
+    //let mut args = cmd.split(' ');
+    Command::new("/bin/sh")
+        .args(vec!["-c", cmd])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
