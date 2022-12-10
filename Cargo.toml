@@ -3,15 +3,12 @@ name = "rdl"
 version = "0.2.2"
 authors = ["nm <mnkisala@gmail.com>"]
 edition = "2018"
-license = "MPL-2.0"
+license = "MIT"
 repository = "https://github.com/mnkisala/rdl"
 description = "dmenu launcher for .desktop files"
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# freedesktop_entry_parser = "1.1"
 clap = "2.33"
 itertools = "0.10"
 yaml-rust = "0.4"
