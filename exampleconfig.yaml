@@ -1,0 +1,9 @@
+# you can place this file at either ~/.config/rdl.yaml or ~/.config/rdl/config.yaml
+# so it executes by default. 
+
+unique: true # shadow entries with ones that were parsed before them
+paths: [
+  "/home/nm/.local/share/applications", # this one is read first
+  "/usr/share/applications", # this one is read second
+]
+term: "alacritty -e" # or whatever you want to use, #the important thing is that the terminal will execute whatever comes after the command
