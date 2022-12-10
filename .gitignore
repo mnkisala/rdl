@@ -1,2 +1,6 @@
 /target
 Cargo.lock
+**/.vscode/
+**/perf.data
+**/perf.data.old
+**/perf.svg

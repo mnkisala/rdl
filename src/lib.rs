@@ -18,10 +18,10 @@ fn process_exec(exec: &str) -> String {
 }
 
 impl Exec {
-    fn new(name: &str, exec: &str, terminal: bool) -> Self {
+    fn new(name: String, exec: String, terminal: bool) -> Self {
         Self {
-            name: String::from(name),
-            exec: String::from(exec),
+            name,
+            exec,
             terminal,
         }
     }
@@ -71,9 +71,9 @@ pub fn run_dmenu<'a, I: std::iter::Iterator<Item = &'a Exec> + Clone>(
     Some((execs.clone().find(|exec| exec.name == output.trim_end())?).clone())
 }
 
-use freedesktop_entry_parser::parse_entry;
+// use freedesktop_entry_parser::parse_entry;
 use std::fs::{self, DirEntry};
-use std::io::{self, Stderr};
+use std::io::{self, Read};
 use std::path::Path;
 
 fn get_entries_from_path(dir: &Path) -> io::Result<Vec<DirEntry>> {
@@ -94,30 +94,49 @@ fn get_entries_from_path(dir: &Path) -> io::Result<Vec<DirEntry>> {
     Ok(entries)
 }
 
+fn parse(path: impl AsRef<Path>) -> Option<Exec> {
+    let mut file = std::fs::File::open(path).ok()?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).ok()?;
+
+    let mut name: Option<String> = None;
+    let mut exec: Option<String> = None;
+    let mut terminal: Option<&str> = None;
+
+    for line in content.lines() {
+        let mut toks = line.split('=');
+
+        if let Some(start_tok) = toks.next() {
+            match start_tok {
+                "Name" => name = Some(toks.next().unwrap().to_owned()),
+                "Exec" => exec = Some(toks.next().unwrap().to_owned()),
+                "Terminal" => terminal = Some(toks.next().unwrap()),
+                "NoDisplay" => {
+                    if toks.next().unwrap() == "true" {
+                        return None;
+                    }
+                }
+                _ => continue,
+            }
+        }
+    }
+
+    Some(Exec::new(
+        name?,
+        exec?,
+        match terminal {
+            Some("true") => true,
+            _ => false,
+        },
+    ))
+}
+
 pub fn get_execs(paths: &Vec<String>) -> Vec<Exec> {
     let execs: Vec<Exec> = paths
         .iter()
         .map(|path| get_entries_from_path(Path::new(path)).unwrap())
         .flatten()
-        .filter_map(|direntry| {
-            let ent = parse_entry(direntry.path()).ok()?;
-            if let Some(nodisplay) = ent.section("Desktop Entry").attr("NoDisplay") {
-                if nodisplay == "true" {
-                    return None;
-                }
-            }
-
-            let exec = Exec::new(
-                ent.section("Desktop Entry").attr("Name")?,
-                ent.section("Desktop Entry").attr("Exec")?,
-                match ent.section("Desktop Entry").attr("Terminal") {
-                    Some("true") => true,
-                    _ => false,
-                },
-            );
-
-            Some(exec)
-        })
+        .filter_map(|direntry| parse(direntry.path()))
         .collect();
 
     execs
