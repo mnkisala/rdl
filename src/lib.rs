@@ -1,5 +1,24 @@
 use std::process::{Child, Command, Stdio};
 
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct Args {
+    /// ':' separated absolute paths to directories with desktop entries
+    #[arg(short, long)]
+    paths: Option<String>,
+    /// dmenu command
+    #[arg(short, long)]
+    dmenu: Option<String>,
+    /// terminal command to use when executing terminal applications
+    #[arg(short, long)]
+    term: Option<String>,
+    /// deduplicates entries by name (first parsed stays)
+    #[arg(short, long)]
+    unique: Option<bool>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Exec {
     pub name: String,
@@ -169,21 +188,21 @@ pub struct RdlConfig {
 }
 
 impl RdlConfig {
-    pub fn update_with_clap_matches(&mut self, matches: clap::ArgMatches) {
-        if let Some(dmenu_cmd) = matches.value_of("dmenu") {
+    pub fn update_with_args(&mut self, args: Args) {
+        if let Some(dmenu_cmd) = args.dmenu {
             self.dmenu = String::from(dmenu_cmd);
         }
 
-        if let Some(term) = matches.value_of("term") {
+        if let Some(term) = args.term {
             self.terminal = String::from(term);
         }
 
-        if let Some(paths) = matches.value_of("paths") {
+        if let Some(paths) = args.paths {
             self.paths = paths.split(":").map(|s| String::from(s)).collect();
         }
 
-        if matches.is_present("unique") {
-            self.unique = true;
+        if let Some(unique) = args.unique {
+            self.unique = unique;
         }
     }
 

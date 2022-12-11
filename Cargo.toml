@@ -9,6 +9,6 @@ description = "dmenu launcher for .desktop files"
 readme = "README.md"
 
 [dependencies]
-clap = "2.33"
+clap = { version = "4.0.29", features = ["derive"] }
 itertools = "0.10"
 yaml-rust = "0.4"
