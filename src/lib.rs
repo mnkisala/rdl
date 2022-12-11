@@ -71,7 +71,6 @@ pub fn run_dmenu<'a, I: std::iter::Iterator<Item = &'a Exec> + Clone>(
     Some((execs.clone().find(|exec| exec.name == output.trim_end())?).clone())
 }
 
-// use freedesktop_entry_parser::parse_entry;
 use std::fs::{self, DirEntry};
 use std::io::{self, Read};
 use std::path::Path;
@@ -96,8 +95,13 @@ fn get_entries_from_path(dir: &Path) -> io::Result<Vec<DirEntry>> {
 
 fn parse(path: impl AsRef<Path>) -> Option<Exec> {
     let mut file = std::fs::File::open(path).ok()?;
-    let mut content = String::new();
-    file.read_to_string(&mut content).ok()?;
+
+    let mut buf: Vec<u8> = Vec::new();
+    file.read_to_end(&mut buf).unwrap();
+
+    // SAFETY: desktop entries are requred to be encoded with utf-8
+    // source: [https://specifications.freedesktop.org/desktop-entry-spec/latest/ar01s03.html]
+    let content = unsafe { std::str::from_utf8_unchecked(&buf) };
 
     let mut name: Option<String> = None;
     let mut exec: Option<String> = None;
@@ -118,6 +122,11 @@ fn parse(path: impl AsRef<Path>) -> Option<Exec> {
                 }
                 _ => continue,
             }
+        }
+
+        // early exit
+        if name.is_some() && exec.is_some() && terminal.is_some() {
+            break;
         }
     }
 
