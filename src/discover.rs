@@ -60,7 +60,12 @@ fn get_entries_from_path(dir: &Path) -> std::io::Result<Vec<DirEntry>> {
                 let mut sub_entries = get_entries_from_path(&path)?;
                 entries.append(&mut sub_entries);
             } else {
-                entries.push(entry);
+                if let Some(ext) = path.extension() {
+                    use std::os::unix::ffi::OsStrExt;
+                    if ext.as_bytes() == b"desktop" {
+                        entries.push(entry);
+                    }
+                }
             }
         }
     }
