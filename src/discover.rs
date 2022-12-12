@@ -6,7 +6,7 @@ fn parse(path: impl AsRef<Path>) -> Option<Exec> {
     let mut file = std::fs::File::open(path).ok()?;
 
     let mut buf: Vec<u8> = Vec::new();
-    file.read_to_end(&mut buf).unwrap();
+    file.read_to_end(&mut buf).ok()?;
 
     // SAFETY: desktop entries are requred to be encoded with utf-8
     // source: [https://specifications.freedesktop.org/desktop-entry-spec/latest/ar01s03.html]
@@ -21,11 +21,11 @@ fn parse(path: impl AsRef<Path>) -> Option<Exec> {
 
         if let Some(start_tok) = toks.next() {
             match start_tok {
-                "Name" => name = Some(toks.next().unwrap().to_owned()),
-                "Exec" => exec = Some(toks.next().unwrap().to_owned()),
-                "Terminal" => terminal = Some(toks.next().unwrap()),
+                "Name" => name = Some(toks.next()?.to_owned()),
+                "Exec" => exec = Some(toks.next()?.to_owned()),
+                "Terminal" => terminal = Some(toks.next()?),
                 "NoDisplay" => {
-                    if toks.next().unwrap() == "true" {
+                    if toks.next()? == "true" {
                         return None;
                     }
                 }
