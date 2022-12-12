@@ -1,9 +1,9 @@
-use rdl::Args;
+use rdl::cli::Args;
 
 fn main() {
     let args = <Args as clap::Parser>::parse();
 
-    let mut config = rdl::RdlConfig::default();
+    let mut config = rdl::config::RdlConfig::default();
 
     config.update_with_config_file(std::path::Path::new(&format!(
         "{}/.config/rdl.yaml",
@@ -17,5 +17,5 @@ fn main() {
 
     config.update_with_args(args);
 
-    config.run();
+    rdl::run(&config);
 }
